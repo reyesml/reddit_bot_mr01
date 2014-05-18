@@ -3,10 +3,18 @@ from pprint import pprint
 import requests
 import json
 import time
+
+
+def get_config():
+  print('Loading config')
+  json_data = open('config.json', 'r').read()
+  config = json.loads(json_data)
+  return config
  
 #set username and password values
-username = 'testUser'
-password = 'hunter2'
+config = get_config()
+username = config['username']
+password = config['password']
  
 #create dict with username and password
 user_pass_dict = {'user': username,
