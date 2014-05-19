@@ -1,8 +1,8 @@
 #importing all the modules
 from pprint import pprint
 import requests
+import requests.auth
 import json
-import time
 
 
 def get_config():
@@ -10,43 +10,47 @@ def get_config():
   json_data = open('config.json', 'r').read()
   config = json.loads(json_data)
   return config
- 
-#set username and password values
+
+#Retrieve the config data
 config = get_config()
 username = config['username']
 password = config['password']
- 
-#create dict with username and password
-user_pass_dict = {'user': username,
-                  'passwd': password,
-                  'api_type': 'json'}
- 
-#set the header for all the following requests
-headers = {'user-agent': 'My first reddit bot 05182014' }
+client_id = config['Client_ID']
+client_secret = config['Client_Secret']
+
+#build the auth data
+client_auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+
+
+post_data = {
+			  'grant_type' : 'password',
+			  'username': username,
+              'password': password,
+              }
+
+
+#set the header for all the following requests.  The user-agent should be unique.
+headers = 	{'user-agent': 'My first reddit bot 05182014'}
  
 #create a requests.session that'll handle our cookies for us
 client = requests.session()
- 
-#make a login request, passing in the user and pass as data
-r = client.post('http://www.reddit.com/api/login', data=user_pass_dict, headers=headers)
- 
-#optional print to confirm error-free response
-#pprint(r.text)
 
-print('-------Response 1 headers---------\n', r.headers, '\n-------------------')
- 
-#turns the response's JSON to a native python dict
-j = json.loads(r.text)
- 
-#grabs the modhash from the response
-client.modhash = j['json']['data']['modhash']
-headers['modhash'] = client.modhash
- 
-#prints the users modhash
-print('{USER}\'s modhash is: {mh}'.format(USER=username, mh=client.modhash))
-#time.sleep(3)
-r = client.get('http://www.reddit.com/api/me.json', headers=headers)
+#request an OAuth token
+r = client.post('https://ssl.reddit.com/api/v1/access_token',headers=headers, auth=client_auth, data=post_data)
+
 print('-------Response 2 headers---------\n', r.headers, '\n-------------------')
+j = json.loads(r.text)
+print('---Response 2 Body-----')
+print(j)
 
-j2 = json.loads(r.text)
-print(j2)
+#store the access_token we receieve from the previous request
+access_token = j['access_token']
+
+#add the access token to our header for future use
+headers["Authorization"] = 'bearer ' + access_token
+
+#verify that the token works, by requesting our user data using the access_token in the header
+r = client.get("https://oauth.reddit.com/api/v1/me", headers=headers)
+
+print('-------User Data--------\n', r.json(), '\n------------------')
+

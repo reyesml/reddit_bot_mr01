@@ -1,4 +1,6 @@
 {
   "username": "testBot",
-  "password": "hunter2"
+  "password": "hunter2",
+  "Client_ID": "Your-ID",
+  "Client_Secret": "Super_secret"
 }
